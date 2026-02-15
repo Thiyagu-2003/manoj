@@ -2,6 +2,89 @@
 const API_URL = 'http://127.0.0.1:8000/api';
 const ITEMS_PER_PAGE = 12;
 
+// Cache Manager for client-side caching
+class CacheManager {
+    constructor() {
+        this.cache = {};
+    }
+
+    set(key, data, ttlMinutes = 5) {
+        const expiresAt = Date.now() + (ttlMinutes * 60 * 1000);
+        this.cache[key] = { data, expiresAt };
+        console.log(`✓ Cached ${key} (TTL: ${ttlMinutes}min)`);
+    }
+
+    get(key) {
+        const cached = this.cache[key];
+        if (!cached) {
+            return null;
+        }
+        
+        if (Date.now() > cached.expiresAt) {
+            delete this.cache[key];
+            console.log(`⟳ Cache expired for ${key}`);
+            return null;
+        }
+        
+        console.log(`✓ Using cached ${key}`);
+        return cached.data;
+    }
+
+    clear() {
+        this.cache = {};
+        console.log('Cache cleared');
+    }
+}
+
+const cache = new CacheManager();
+
+// Spinner Helper Functions
+function showSpinner(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        // Only add if not already present
+        if (!element.querySelector('.loading-spinner-container')) {
+            const spinnerDiv = document.createElement('div');
+            spinnerDiv.className = 'loading-spinner-container loading';
+            spinnerDiv.innerHTML = 'Loading<span class="spinner-inline"></span>';
+            
+            // If it's the products grid, we want it to span all columns or be prominent
+            if (elementId === 'productsGrid') {
+                spinnerDiv.style.gridColumn = '1 / -1';
+                spinnerDiv.style.textAlign = 'center';
+                spinnerDiv.style.padding = '3rem';
+            }
+            
+            element.prepend(spinnerDiv);
+        }
+    }
+}
+
+function hideSpinner(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const spinner = element.querySelector('.loading-spinner-container');
+        if (spinner) {
+            spinner.remove();
+        }
+    }
+}
+
+function showOverlaySpinner() {
+    const overlay = document.createElement('div');
+    overlay.id = 'spinnerOverlay';
+    overlay.className = 'spinner-overlay';
+    overlay.innerHTML = '<div class="spinner"></div>';
+    document.body.appendChild(overlay);
+}
+
+function hideOverlaySpinner() {
+    const overlay = document.getElementById('spinnerOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
 // State Management
 let state = {
     allProducts: [],
@@ -44,13 +127,26 @@ function updateApiStatus(message, isError) {
     statusElement.classList.toggle('error', isError);
 }
 
-// Load Categories
+// Load Categories from API
 async function loadCategories() {
     try {
+        // Check cache first
+        const cachedCategories = cache.get('categories');
+        if (cachedCategories) {
+            state.categories = cachedCategories;
+            populateCategorySelect(); // Changed from populateCategoryDropdown to populateCategorySelect
+            return;
+        }
+
+        console.log('⟳ Fetching categories from API...');
         const response = await fetch(`${API_URL}/categories`);
         const data = await response.json();
         state.categories = data.categories;
-        populateCategorySelect();
+        
+        // Cache for 10 minutes
+        cache.set('categories', data.categories, 10);
+        
+        populateCategorySelect(); // Changed from populateCategoryDropdown to populateCategorySelect
     } catch (error) {
         console.error('Error loading categories:', error);
     }
@@ -66,10 +162,24 @@ function populateCategorySelect() {
     });
 }
 
-// Load Products
+// Load Products from API
 async function loadProducts() {
     try {
-        console.log('Loading products...');
+        const productsGrid = document.getElementById('productsGrid');
+        
+        // Check cache first
+        const cachedProducts = cache.get('products');
+        if (cachedProducts) {
+            state.allProducts = cachedProducts;
+            state.filteredProducts = cachedProducts;
+            displayProducts(); // Changed from applyFiltersAndSort to displayProducts
+            return;
+        }
+
+        // Show loading spinner
+        showSpinner('productsGrid');
+        
+        console.log('⟳ Fetching products from API...');
         const response = await fetch(`${API_URL}/products`);
         
         if (!response.ok) {
@@ -77,15 +187,21 @@ async function loadProducts() {
         }
         
         const products = await response.json();
+        
         state.allProducts = products;
         state.filteredProducts = products;
         
-        console.log(`✓ Loaded ${products.length} products`);
-        displayProducts();
+        // Cache for 5 minutes
+        cache.set('products', products, 5);
+        
+        // Hide spinner BEFORE displaying products to avoid clearing the grid
+        hideSpinner('productsGrid');
+        displayProducts(); 
     } catch (error) {
         console.error('Error loading products:', error);
+        hideSpinner('productsGrid');
         document.getElementById('productsGrid').innerHTML = 
-            '<div class="loading" style="grid-column: 1/-1;">Error loading products. Please check if the backend is running.</div>';
+            '<div class="loading" style="color: #e74c3c; grid-column: 1/-1;">Failed to load products. Please try again.</div>';
     }
 }
 
@@ -151,6 +267,17 @@ function createProductCard(product) {
     const priceChangeBadgeClass = priceChange >= 0 ? 'positive' : '';
     const priceChangeText = priceChange >= 0 ? `+${priceChange.toFixed(1)}%` : `${priceChange.toFixed(1)}%`;
     
+    // Determine trend arrow and class
+    let trendArrow = '→';
+    let trendClass = 'trend-stable';
+    if (priceChange > 0.5) {
+        trendArrow = '↑';
+        trendClass = 'trend-up';
+    } else if (priceChange < -0.5) {
+        trendArrow = '↓';
+        trendClass = 'trend-down';
+    }
+    
     const stockStatus = product.stock < 10 ? 'low' : product.stock < 50 ? 'medium' : 'high';
     const stockText = product.stock < 10 ? 'Low Stock!' : product.stock < 50 ? 'Medium Stock' : 'In Stock';
     
@@ -181,7 +308,10 @@ function createProductCard(product) {
                 
                 <div class="pricing-row">
                     <span class="detail-label">Price Change:</span>
-                    <span class="discount-badge ${priceChangeBadgeClass}">${priceChangeText}</span>
+                    <span class="discount-badge ${priceChangeBadgeClass}">
+                        <span class="trend-arrow ${trendClass}">${trendArrow}</span>
+                        ${priceChangeText}
+                    </span>
                 </div>
             </div>
             
@@ -280,23 +410,51 @@ function previousPage() {
 // Load Insights
 async function loadInsights() {
     try {
-        const response = await fetch(`${API_URL}/insights`);
-        const insights = await response.json();
-        
-        // Update insight cards
-        document.getElementById('totalProducts').textContent = insights.total_products;
-        document.getElementById('totalStock').textContent = insights.total_stock.toLocaleString();
-        document.getElementById('salesWeek').textContent = insights.total_sales_7days.toLocaleString();
-        document.getElementById('avgPrice').textContent = `₹${insights.average_price.toFixed(2)}`;
-        
-        // Show low stock alerts if any
-        if (insights.low_stock_alerts && insights.low_stock_alerts.length > 0) {
-            displayAlerts(insights.low_stock_alerts);
+        // Check cache first
+        const cachedInsights = cache.get('insights');
+        if (cachedInsights) {
+            displayInsights(cachedInsights);
+            return;
         }
+
+        const insightsSection = document.getElementById('insightsSection');
+        showSpinner('insightsSection');
         
-        console.log('✓ Insights loaded');
+        console.log('⟳ Fetching insights from API...');
+        const response = await fetch(`${API_URL}/insights`);
+        const data = await response.json();
+        
+        // Cache for 2 minutes
+        cache.set('insights', data, 2);
+        
+        hideSpinner('insightsSection');
+        displayInsights(data);
     } catch (error) {
         console.error('Error loading insights:', error);
+    }
+}
+
+function displayInsights(data) {
+    // Update insight cards
+    document.getElementById('totalProducts').textContent = data.total_products || '0';
+    document.getElementById('totalStock').textContent = data.total_stock?.toLocaleString() || '0';
+    document.getElementById('salesWeek').textContent = data.total_sales_7days?.toLocaleString() || '0';
+    document.getElementById('avgPrice').textContent = data.average_price ? `₹${data.average_price.toFixed(2)}` : '-';
+    
+    // Display low stock alerts
+    if (data.low_stock_alerts && data.low_stock_alerts.length > 0) {
+        const alertsSection = document.getElementById('alertsSection');
+        const alertsList = document.getElementById('alertsList');
+        
+        alertsList.innerHTML = data.low_stock_alerts.map(alert => `
+            <div class="alert-item">
+                <strong>${escapeHtml(alert.name)}</strong>: Only ${alert.stock} units left!
+            </div>
+        `).join('');
+        
+        alertsSection.style.display = 'block';
+    } else {
+        document.getElementById('alertsSection').style.display = 'none';
     }
 }
 

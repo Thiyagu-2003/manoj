@@ -81,9 +81,17 @@ def calculate_dynamic_price(product_id: int) -> dict:
     
     # Predict dynamic price using ML model
     if model and scaler:
-        features = np.array([[demand_ratio, inventory_level, sales_trend, popularity, scarcity, product['day']]])
-        features_scaled = scaler.transform(features)
-        predicted_price = model.predict(features_scaled)[0]
+        try:
+            features = pd.DataFrame([[
+                demand_ratio, inventory_level, sales_trend, 
+                popularity, scarcity, product['day']
+            ]], columns=['demand_ratio', 'inventory_level', 'sales_trend', 'popularity', 'scarcity', 'day'])
+            features_scaled = scaler.transform(features)
+            predicted_price = model.predict(features_scaled)[0]
+        except Exception as e:
+            # If model prediction fails, use fallback formula
+            print(f"Warning: Model prediction failed for product {product_id}: {str(e)}. Using fallback pricing.")
+            predicted_price = base_price * (1 + (demand_ratio * 0.3) - (inventory_level * 0.2))
     else:
         # Fallback to simple formula if model not available
         predicted_price = base_price * (1 + (demand_ratio * 0.3) - (inventory_level * 0.2))
@@ -147,7 +155,21 @@ def get_product(product_id: int):
     product = df[df['product_id'] == product_id]
     
     if product.empty:
-        raise HTTPException(status_code=404, detail=f"Product {product_id} not found")
+        # Get valid product ID range for helpful error message
+        min_id = int(df['product_id'].min())
+        max_id = int(df['product_id'].max())
+        total_products = len(df)
+        raise HTTPException(
+            status_code=404, 
+            detail={
+                "error": "Product not found",
+                "message": f"Product ID {product_id} does not exist in our catalog",
+                "requested_id": product_id,
+                "valid_range": f"{min_id}-{max_id}",
+                "total_products": total_products,
+                "suggestion": "Please use the /api/products endpoint to see all available products"
+            }
+        )
     
     product = product.iloc[0]
     pricing = calculate_dynamic_price(product_id)
@@ -170,9 +192,20 @@ def get_product(product_id: int):
 def get_products_by_category(category: str):
     """Get all products in a specific category with dynamic pricing"""
     products_in_category = df[df['category'].str.lower() == category.lower()]
-    
     if products_in_category.empty:
-        raise HTTPException(status_code=404, detail=f"Category {category} not found")
+        # Get list of valid categories for helpful error message
+        available_categories = sorted(df['category'].unique().tolist())
+        raise HTTPException(
+            status_code=404, 
+            detail={
+                "error": "Category not found",
+                "message": f"Category '{category}' does not exist in our catalog",
+                "requested_category": category,
+                "available_categories": available_categories,
+                "total_categories": len(available_categories),
+                "suggestion": "Please use the /api/categories endpoint to see all valid categories"
+            }
+        )
     
     products = []
     for _, row in products_in_category.iterrows():
@@ -203,16 +236,25 @@ def get_categories():
 def predict_price(request: PricingRequest):
     """Predict price based on custom features"""
     if not model or not scaler:
-        raise HTTPException(status_code=500, detail="Model not loaded")
+        raise HTTPException(
+            status_code=503, 
+            detail={
+                "error": "ML model unavailable",
+                "message": "The pricing prediction model is not currently loaded",
+                "reason": "Model files (pricing_model.pkl or scaler.pkl) are missing",
+                "solution": "Please run 'python model.py' in the backend directory to train and save the model",
+                "fallback": "The /api/products endpoint uses a fallback pricing formula when the model is unavailable"
+            }
+        )
     
-    features = np.array([[
+    features = pd.DataFrame([[
         request.demand_ratio,
         request.inventory_level,
         request.sales_trend,
         request.popularity,
         request.scarcity,
         request.day
-    ]])
+    ]], columns=['demand_ratio', 'inventory_level', 'sales_trend', 'popularity', 'scarcity', 'day'])
     
     features_scaled = scaler.transform(features)
     predicted_price = model.predict(features_scaled)[0]
