@@ -38,6 +38,114 @@ class CacheManager {
 
 const cache = new CacheManager();
 
+// Cart Manager for shopping cart functionality
+class CartManager {
+    constructor() {
+        this.items = this.loadFromStorage();
+        this.updateBadge();
+    }
+
+    loadFromStorage() {
+        const saved = localStorage.getItem('grocery_cart');
+        return saved ? JSON.parse(saved) : [];
+    }
+
+    saveToStorage() {
+        localStorage.setItem('grocery_cart', JSON.stringify(this.items));
+    }
+
+    addItem(product) {
+        const existing = this.items.find(item => item.product_id === product.product_id);
+        if (existing) {
+            existing.quantity += 1;
+        } else {
+            this.items.push({
+                product_id: product.product_id,
+                name: product.name,
+                price: product.dynamic_price,
+                quantity: 1
+            });
+        }
+        this.saveToStorage();
+        this.updateBadge();
+        this.render();
+        console.log(`+ Added ${product.name} to cart`);
+    }
+
+    removeItem(productId) {
+        this.items = this.items.filter(item => item.product_id !== productId);
+        this.saveToStorage();
+        this.updateBadge();
+        this.render();
+    }
+
+    updateQuantity(productId, delta) {
+        const item = this.items.find(i => i.product_id === productId);
+        if (item) {
+            item.quantity += delta;
+            if (item.quantity <= 0) {
+                this.removeItem(productId);
+            } else {
+                this.saveToStorage();
+                this.render();
+            }
+        }
+    }
+
+    getTotal() {
+        return this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
+    updateBadge() {
+        const badge = document.getElementById('cartBadge');
+        if (badge) {
+            const count = this.items.reduce((sum, item) => sum + item.quantity, 0);
+            badge.textContent = count;
+            badge.classList.toggle('empty', count === 0);
+        }
+    }
+
+    render() {
+        const cartItems = document.getElementById('cartItems');
+        const cartTotalValue = document.getElementById('cartTotalValue');
+        
+        if (!cartItems) return;
+
+        if (this.items.length === 0) {
+            cartItems.innerHTML = '<p class="empty-cart-msg">Your cart is empty.</p>';
+            if (cartTotalValue) cartTotalValue.textContent = '₹0.00';
+            return;
+        }
+
+        cartItems.innerHTML = this.items.map(item => `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <h4>${escapeHtml(item.name)}</h4>
+                    <p>₹${item.price.toFixed(2)} x ${item.quantity}</p>
+                </div>
+                <div class="cart-item-controls">
+                    <button class="btn-qty" onclick="cart.updateQuantity(${item.product_id}, -1)">-</button>
+                    <span>${item.quantity}</span>
+                    <button class="btn-qty" onclick="cart.updateQuantity(${item.product_id}, 1)">+</button>
+                </div>
+            </div>
+        `).join('');
+
+        if (cartTotalValue) {
+            cartTotalValue.textContent = `₹${this.getTotal().toFixed(2)}`;
+        }
+    }
+
+    clear() {
+        this.items = [];
+        this.saveToStorage();
+        this.updateBadge();
+        this.render();
+    }
+}
+
+const cart = new CartManager();
+
 // Spinner Helper Functions
 function showSpinner(elementId) {
     const element = document.getElementById(elementId);
@@ -93,7 +201,10 @@ let state = {
     searchQuery: '',
     selectedCategory: '',
     sortBy: 'name',
-    categories: []
+    categories: [],
+    cart: [],
+    isAdminView: false,
+    charts: {}
 };
 
 // Initialize Application
@@ -109,6 +220,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
         themeBtn.addEventListener('click', toggleTheme);
+    }
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        try {
+            await navigator.serviceWorker.register('sw.js');
+            console.log('✓ Service Worker registered');
+        } catch (error) {
+            console.error('✗ Service Worker registration failed:', error);
+        }
     }
 });
 
@@ -381,12 +502,18 @@ function createProductCard(product) {
                 </div>
             </div>
             
-            <button onclick="addToCart(${product.product_id}, '${escapeHtml(product.name)}')" 
-                    style="width: 100%; margin-top: 1rem; background: #3498db; color: white; padding: 0.75rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.3s;" 
-                    onmouseover="this.style.background='#2980b9'" 
-                    onmouseout="this.style.background='#3498db'">
-                Add to Cart 🛒
-            </button>
+            <div class="product-actions">
+                <button class="btn btn-add-cart" onclick="cart.addItem({
+                    product_id: ${product.product_id},
+                    name: '${escapeHtml(product.name)}',
+                    dynamic_price: ${product.dynamic_price}
+                })">
+                    <span>🛒</span> Add to Cart
+                </button>
+                <button class="btn btn-view-details" onclick="showProductDetails(${product.product_id})">
+                    View Details
+                </button>
+            </div>
         </div>
     `;
 }
@@ -443,6 +570,251 @@ function previousPage() {
     }
 }
 
+// UI Controls
+function toggleCart() {
+    const modal = document.getElementById('cartModal');
+    if (modal) {
+        modal.classList.toggle('active');
+        if (modal.classList.contains('active')) {
+            cart.render();
+        }
+    }
+}
+
+function checkout() {
+    if (cart.items.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+    
+    showOverlaySpinner();
+    
+    // Simulate API call
+    setTimeout(() => {
+        hideOverlaySpinner();
+        alert(`Order successful! Total: ₹${cart.getTotal().toFixed(2)}\nThank you for shopping with GroceryDynamix!`);
+        cart.clear();
+        toggleCart();
+    }, 1500);
+}
+
+function toggleAdminView() {
+    state.isAdminView = !state.isAdminView;
+    const adminDashboard = document.getElementById('adminDashboard');
+    const storeView = document.getElementById('storeView');
+    const adminToggleBtn = document.getElementById('adminToggleBtn');
+
+    if (state.isAdminView) {
+        adminDashboard.style.display = 'block';
+        storeView.style.display = 'none';
+        if (adminToggleBtn) adminToggleBtn.style.display = 'none';
+        loadAdminData();
+    } else {
+        adminDashboard.style.display = 'none';
+        storeView.style.display = 'block';
+        if (adminToggleBtn) adminToggleBtn.style.display = 'block';
+    }
+}
+
+async function loadAdminData() {
+    const cachedInsights = cache.get('insights');
+    if (cachedInsights) {
+        initCharts(cachedInsights);
+        renderStatsTable(cachedInsights);
+    } else {
+        await loadInsights(); // This will call displayInsights which we'll update to also call initCharts
+    }
+}
+
+function initCharts(data) {
+    // 1. Sales & Demand Trends (Top 10)
+    const salesCtx = document.getElementById('salesChart')?.getContext('2d');
+    if (salesCtx) {
+        if (state.charts.sales) state.charts.sales.destroy();
+        
+        const topProducts = data.top_demand_products || [];
+        state.charts.sales = new Chart(salesCtx, {
+            type: 'bar',
+            data: {
+                labels: topProducts.map(p => p.name),
+                datasets: [{
+                    label: 'Demand Ratio',
+                    data: topProducts.map(p => p.demand_ratio),
+                    backgroundColor: '#10b981',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // 2. Inventory Distribution by Category
+    const invCtx = document.getElementById('inventoryChart')?.getContext('2d');
+    if (invCtx) {
+        if (state.charts.inventory) state.charts.inventory.destroy();
+        
+        const stats = data.category_statistics || {};
+        const labels = Object.keys(stats);
+        state.charts.inventory = new Chart(invCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: labels.map(l => stats[l].stock),
+                    backgroundColor: [
+                        '#10b981', '#6366f1', '#f59e0b', '#ef4444', 
+                        '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+}
+
+function renderStatsTable(data) {
+    const container = document.getElementById('categoryStatsTable');
+    if (!container) return;
+
+    const stats = data.category_statistics || {};
+    let html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Items</th>
+                    <th>Avg Price</th>
+                    <th>Total Stock</th>
+                    <th>7D Sales</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    for (const [cat, detail] of Object.entries(stats)) {
+        html += `
+            <tr>
+                <td><strong>${cat.charAt(0).toUpperCase() + cat.slice(1)}</strong></td>
+                <td>${detail.product_count}</td>
+                <td>₹${detail.base_price.toFixed(2)}</td>
+                <td>${detail.stock}</td>
+                <td>${detail.sales_7}</td>
+            </tr>
+        `;
+    }
+
+    html += `
+            </tbody>
+        </table>
+    `;
+    container.innerHTML = html;
+}
+
+// Placeholder for Product Details (will be enhanced in next task)
+function showProductDetails(productId) {
+    const product = state.allProducts.find(p => p.product_id === productId);
+    if (!product) return;
+
+    const modal = document.getElementById('detailsModal');
+    const content = modal.querySelector('.modal-content');
+    
+    content.innerHTML = `
+        <div class="modal-header">
+            <h3>${escapeHtml(product.name)}</h3>
+            <span class="close-modal" onclick="closeDetails()">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 1.5rem;">
+            <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+                <div style="flex: 1;">
+                    <p><strong>Category:</strong> ${escapeHtml(product.category)}</p>
+                    <p><strong>Available Stock:</strong> ${product.stock} units</p>
+                    <p><strong>Base Price:</strong> ₹${product.base_price.toFixed(2)}</p>
+                    <p style="font-size: 1.5rem; color: var(--accent-color); margin-top: 1rem;">
+                        <strong>Current Price:</strong> ₹${product.dynamic_price.toFixed(2)}
+                    </p>
+                </div>
+                <div style="flex: 1; background: var(--secondary-bg); border-radius: 12px; padding: 1rem; position: relative; min-height: 200px;">
+                    <canvas id="productDetailChart"></canvas>
+                </div>
+            </div>
+            <div style="margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">User Sentiment</h4>
+                <div style="display: flex; gap: 0.5rem; color: #f59e0b;">
+                    <span>★★★★☆</span>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">(4.2 based on 128 orders)</span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">"Usually fresh and well-stocked. Price fluctuates but it's okay for the quality."</p>
+            </div>
+            <button class="btn btn-add-cart" onclick="cart.addItem({
+                product_id: ${product.product_id},
+                name: '${escapeHtml(product.name)}',
+                dynamic_price: ${product.dynamic_price}
+            }); closeDetails();">Add to Cart</button>
+        </div>
+    `;
+    
+    modal.classList.add('active');
+    
+    // Initialize Product Detail Chart (Stock History)
+    setTimeout(() => {
+        const ctx = document.getElementById('productDetailChart')?.getContext('2d');
+        if (ctx) {
+            if (state.charts.productDetail) state.charts.productDetail.destroy();
+            
+            // Generate some semi-realistic mock history
+            const baseStock = product.stock;
+            const labels = ['6d ago', '5d ago', '4d ago', '3d ago', '2d ago', 'Yesterday', 'Today'];
+            const stockHistory = labels.map((_, i) => Math.max(0, baseStock + Math.floor(Math.random() * 20) - (7-i)*2));
+
+            state.charts.productDetail = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Stock Level',
+                        data: stockHistory,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    }, 100);
+}
+
+function closeDetails() {
+    document.getElementById('detailsModal').classList.remove('active');
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const cartModal = document.getElementById('cartModal');
+    const detailsModal = document.getElementById('detailsModal');
+    if (event.target === cartModal) toggleCart();
+    if (event.target === detailsModal) closeDetails();
+}
+
 // Load Insights
 async function loadInsights() {
     try {
@@ -453,7 +825,6 @@ async function loadInsights() {
             return;
         }
 
-        const insightsSection = document.getElementById('insightsSection');
         showSpinner('insightsSection');
         
         console.log('⟳ Fetching insights from API...');
@@ -465,32 +836,34 @@ async function loadInsights() {
         
         hideSpinner('insightsSection');
         displayInsights(data);
+        if (state.isAdminView) {
+            initCharts(data);
+            renderStatsTable(data);
+        }
     } catch (error) {
         console.error('Error loading insights:', error);
+        hideSpinner('insightsSection');
     }
 }
 
 function displayInsights(data) {
     // Update insight cards
-    document.getElementById('totalProducts').textContent = data.total_products || '0';
-    document.getElementById('totalStock').textContent = data.total_stock?.toLocaleString() || '0';
-    document.getElementById('salesWeek').textContent = data.total_sales_7days?.toLocaleString() || '0';
-    document.getElementById('avgPrice').textContent = data.average_price ? `₹${data.average_price.toFixed(2)}` : '-';
+    const totalProducts = document.getElementById('totalProducts');
+    const totalStock = document.getElementById('totalStock');
+    const salesWeek = document.getElementById('salesWeek');
+    const avgPrice = document.getElementById('avgPrice');
+
+    if (totalProducts) totalProducts.textContent = data.total_products || '0';
+    if (totalStock) totalStock.textContent = data.total_stock?.toLocaleString() || '0';
+    if (salesWeek) salesWeek.textContent = data.total_sales_7days?.toLocaleString() || '0';
+    if (avgPrice) avgPrice.textContent = data.average_price ? `₹${data.average_price.toFixed(2)}` : '-';
     
     // Display low stock alerts
     if (data.low_stock_alerts && data.low_stock_alerts.length > 0) {
-        const alertsSection = document.getElementById('alertsSection');
-        const alertsList = document.getElementById('alertsList');
-        
-        alertsList.innerHTML = data.low_stock_alerts.map(alert => `
-            <div class="alert-item">
-                <strong>${escapeHtml(alert.name)}</strong>: Only ${alert.stock} units left!
-            </div>
-        `).join('');
-        
-        alertsSection.style.display = 'block';
+        displayAlerts(data.low_stock_alerts);
     } else {
-        document.getElementById('alertsSection').style.display = 'none';
+        const alertsSection = document.getElementById('alertsSection');
+        if (alertsSection) alertsSection.style.display = 'none';
     }
 }
 
@@ -499,30 +872,24 @@ function displayAlerts(alerts) {
     const alertsSection = document.getElementById('alertsSection');
     const alertsList = document.getElementById('alertsList');
     
+    if (!alertsSection || !alertsList) return;
+
     alertsList.innerHTML = alerts.map(alert => `
         <div class="alert-item">
-            <strong>${escapeHtml(alert.name)}</strong> (ID: ${alert.product_id})
-            <br>
-            <small>Current Stock: <strong>${alert.stock} units</strong></small>
+            <strong>${escapeHtml(alert.name)}</strong>: Only ${alert.stock} units left!
         </div>
     `).join('');
     
     alertsSection.style.display = 'block';
 }
 
-// Add to Cart (Simulated)
-function addToCart(productId, productName) {
-    alert(`✅ "${productName}" added to cart!\n\nNote: This is a demo. Cart functionality can be integrated with a backend database.`);
-}
-
-// Allow Enter key to search
+// Global Event Listeners
 document.addEventListener('keyup', (e) => {
     if (e.target.id === 'searchInput' && e.key === 'Enter') {
         searchProducts();
     }
 });
 
-// Debounce search for real-time filtering (optional)
 let searchTimeout;
 document.addEventListener('input', (e) => {
     if (e.target.id === 'searchInput') {
@@ -536,4 +903,3 @@ document.addEventListener('input', (e) => {
 // Log initialization
 console.log('✓ Dynamic Pricing Frontend initialized');
 console.log(`API URL: ${API_URL}`);
-console.log(`Items per page: ${ITEMS_PER_PAGE}`);
