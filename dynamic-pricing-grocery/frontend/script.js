@@ -99,11 +99,45 @@ let state = {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Initializing Dynamic Pricing Application...');
+    initTheme();
     await checkApiStatus();
     await loadCategories();
     await loadProducts();
     await loadInsights();
+    
+    // Add theme toggle listener
+    const themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', toggleTheme);
+    }
 });
+
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        updateThemeIcon(true);
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-theme');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateThemeIcon(isDark);
+    console.log(`Theme switched to: ${isDark ? 'Dark' : 'Light'}`);
+}
+
+function updateThemeIcon(isDark) {
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+        icon.textContent = isDark ? '☀️' : '🌙';
+    }
+    const btn = document.getElementById('themeToggle');
+    if (btn) {
+        btn.title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+    }
+}
 
 // Check API Status
 async function checkApiStatus() {
