@@ -154,6 +154,11 @@ async function loadCategories() {
 
 function populateCategorySelect() {
     const select = document.getElementById('categorySelect');
+    if (!select) return;
+    
+    // Reset to only include "All Categories"
+    select.innerHTML = '<option value="">All Categories</option>';
+    
     state.categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
@@ -211,8 +216,8 @@ function displayProducts() {
     const noResults = document.getElementById('noResults');
     const pagination = document.getElementById('pagination');
     
-    // Apply filters
-    let products = state.allProducts;
+    // Start with all products
+    let products = [...state.allProducts];
     
     // Search filter
     if (state.searchQuery) {
@@ -227,10 +232,28 @@ function displayProducts() {
         products = products.filter(p => p.category === state.selectedCategory);
     }
     
-    state.filteredProducts = products;
+    // Sort products
+    const sortBy = state.sortBy;
+    switch (sortBy) {
+        case 'name':
+            products.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+        case 'dynamic_price':
+            products.sort((a, b) => a.dynamic_price - b.dynamic_price);
+            break;
+        case 'price_high':
+            products.sort((a, b) => b.dynamic_price - a.dynamic_price);
+            break;
+        case 'demand':
+            const demandOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+            products.sort((a, b) => demandOrder[b.demand_level] - demandOrder[a.demand_level]);
+            break;
+        case 'stock':
+            products.sort((a, b) => b.stock - a.stock);
+            break;
+    }
     
-    // Sort
-    sortProducts();
+    state.filteredProducts = products;
     
     // Check if no results
     if (products.length === 0) {
@@ -358,35 +381,14 @@ function filterByCategory() {
 }
 
 // Sort Products
+// Sort Products Event Handler
 function sortProducts() {
     const sortSelect = document.getElementById('sortSelect');
-    const sortBy = sortSelect ? sortSelect.value : state.sortBy;
-    state.sortBy = sortBy;
-    
-    let products = [...state.filteredProducts];
-    
-    switch (sortBy) {
-        case 'name':
-            products.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-        case 'dynamic_price':
-            products.sort((a, b) => a.dynamic_price - b.dynamic_price);
-            break;
-        case 'price_high':
-            products.sort((a, b) => b.dynamic_price - a.dynamic_price);
-            break;
-        case 'demand':
-            const demandOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
-            products.sort((a, b) => demandOrder[b.demand_level] - demandOrder[a.demand_level]);
-            break;
-        case 'stock':
-            products.sort((a, b) => b.stock - a.stock);
-            break;
+    if (sortSelect) {
+        state.sortBy = sortSelect.value;
+        state.currentPage = 1;
+        displayProducts();
     }
-    
-    state.filteredProducts = products;
-    state.currentPage = 1;
-    displayProducts();
 }
 
 // Pagination
