@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Pricing Grocery Store</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <h1 class="logo">🛒 GroceryDynamix</h1>
+            <p class="tagline">AI-Powered Dynamic Pricing for Groceries</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <h2>Smart Grocery Shopping with Dynamic Prices</h2>
+            <p>Prices adjust based on demand, stock levels, and market trends</p>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search products..." class="search-input">
+                <button onclick="searchProducts()" class="btn btn-search">Search</button>
+            </div>
+
+            <div class="filter-box">
+                <label for="categorySelect">Filter by Category:</label>
+                <select id="categorySelect" onchange="filterByCategory()" class="category-select">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
+            <div class="sort-box">
+                <label for="sortSelect">Sort by:</label>
+                <select id="sortSelect" onchange="sortProducts()" class="sort-select">
+                    <option value="name">Product Name</option>
+                    <option value="dynamic_price">Price (Low to High)</option>
+                    <option value="price_high">Price (High to Low)</option>
+                    <option value="demand">Demand Level</option>
+                    <option value="stock">Stock Available</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Insights Dashboard -->
+        <div class="insights-section" id="insightsSection">
+            <h3>Market Insights</h3>
+            <div class="insights-grid" id="insightsGrid">
+                <div class="insight-card">
+                    <p class="insight-label">Total Products</p>
+                    <p class="insight-value" id="totalProducts">-</p>
+                </div>
+                <div class="insight-card">
+                    <p class="insight-label">Total Stock</p>
+                    <p class="insight-value" id="totalStock">-</p>
+                </div>
+                <div class="insight-card">
+                    <p class="insight-label">7-Day Sales</p>
+                    <p class="insight-value" id="salesWeek">-</p>
+                </div>
+                <div class="insight-card">
+                    <p class="insight-label">Avg Price</p>
+                    <p class="insight-value" id="avgPrice">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="alerts-section" id="alertsSection" style="display: none;">
+            <h3>⚠️ Low Stock Alerts</h3>
+            <div id="alertsList" class="alerts-list"></div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-section">
+            <h3>Products Catalog</h3>
+            <div class="products-grid" id="productsGrid">
+                <div class="loading">Loading products...</div>
+            </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div class="no-results" id="noResults" style="display: none;">
+            <p>No products found. Try a different search or filter.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button onclick="previousPage()" class="btn btn-pagination">← Previous</button>
+            <span id="pageInfo"></span>
+            <button onclick="nextPage()" class="btn btn-pagination">Next →</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 GroceryDynamix - Powered by AI-Driven Dynamic Pricing</p>
+        <p>Backend API: <span id="apiStatus" class="api-status">Connecting...</span></p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

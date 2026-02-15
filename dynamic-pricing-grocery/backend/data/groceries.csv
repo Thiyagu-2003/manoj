@@ -1,0 +1,201 @@
+product_id,name,category,base_price,stock,sales_7,sales_30,day
+1,Rice,Grains,50,20,30,120,2
+2,Sugar,Sweeteners,40,15,25,100,4
+3,Milk,Dairy,30,10,40,150,5
+4,Oil,Cooking,120,8,20,90,6
+5,Dal,Grains,90,25,15,60,1
+6,Wheat,Grains,60,30,25,110,3
+7,Butter,Dairy,250,5,10,45,2
+8,Cheese,Dairy,180,8,15,60,4
+9,Yogurt,Dairy,35,20,35,140,5
+10,Bread,Bakery,40,50,80,320,7
+11,Tea,Beverages,150,15,20,80,3
+12,Coffee,Beverages,200,12,18,72,2
+13,Salt,Spices,20,100,50,200,6
+14,Black Pepper,Spices,300,5,8,32,1
+15,Turmeric,Spices,250,8,10,40,2
+16,Cumin,Spices,280,6,9,36,3
+17,Coriander,Spices,320,5,7,28,4
+18,Garlic,Vegetables,80,20,40,160,5
+19,Onion,Vegetables,30,100,120,480,7
+20,Potato,Vegetables,20,150,200,800,6
+21,Tomato,Vegetables,25,80,100,400,7
+22,Carrot,Vegetables,35,60,70,280,5
+23,Cucumber,Vegetables,20,50,60,240,6
+24,Lettuce,Vegetables,40,30,45,180,4
+25,Cabbage,Vegetables,30,70,80,320,5
+26,Apple,Fruits,60,40,50,200,3
+27,Banana,Fruits,30,100,150,600,7
+28,Orange,Fruits,40,60,70,280,5
+29,Mango,Fruits,80,30,40,160,2
+30,Grapes,Fruits,120,20,30,120,1
+31,Watermelon,Fruits,50,25,35,140,4
+32,Papaya,Fruits,45,15,25,100,3
+33,Chicken,Meat,200,30,40,160,5
+34,Mutton,Meat,350,15,20,80,2
+35,Fish,Meat,250,20,30,120,4
+36,Eggs,Protein,100,50,70,280,6
+37,Paneer,Dairy,300,10,18,72,3
+38,Almonds,Nuts,600,5,8,32,1
+39,Cashews,Nuts,700,4,6,24,1
+40,Peanuts,Nuts,150,10,15,60,3
+41,Walnuts,Nuts,800,3,5,20,2
+42,Sunflower Oil,Cooking,100,15,25,100,4
+43,Mustard Oil,Cooking,110,10,18,72,3
+44,Ghee,Cooking,280,8,12,48,2
+45,Vinegar,Cooking,40,20,30,120,5
+46,Soy Sauce,Cooking,60,15,20,80,3
+47,Honey,Sweeteners,180,10,15,60,2
+48,Jaggery,Sweeteners,50,20,30,120,5
+49,White Bread,Bakery,50,40,60,240,6
+50,Brown Bread,Bakery,60,30,45,180,4
+51,Biscuits,Snacks,80,50,80,320,7
+52,Chips,Snacks,30,60,100,400,6
+53,Cookies,Snacks,120,35,50,200,5
+54,Crackers,Snacks,70,40,60,240,4
+55,Noodles,Staples,30,100,150,600,7
+56,Pasta,Staples,60,50,70,280,5
+57,Cornflakes,Breakfast,150,25,40,160,3
+58,Oats,Breakfast,120,20,35,140,4
+59,Juice,Beverages,80,30,50,200,5
+60,Soft Drinks,Beverages,40,50,80,320,6
+61,Water,Beverages,20,200,300,1200,7
+62,Canned Beans,Staples,50,30,45,180,4
+63,Canned Vegetables,Staples,45,25,40,160,3
+64,Canned Fruits,Staples,70,20,30,120,2
+65,Peanut Butter,Spreads,200,15,25,100,3
+66,Chocolate Spread,Spreads,180,10,18,72,2
+67,Jam,Spreads,120,20,30,120,4
+68,Pickles,Spreads,80,25,35,140,5
+69,Ketchup,Condiments,60,30,45,180,5
+70,Mayonnaise,Condiments,100,15,20,80,3
+71,Mustard,Condiments,50,20,30,120,4
+72,Chutney,Condiments,70,25,35,140,5
+73,Pasta Sauce,Condiments,90,15,22,88,3
+74,Cooking Spray,Cooking,120,10,15,60,2
+75,Flour,Staples,80,40,60,240,5
+76,Cornmeal,Staples,60,20,30,120,3
+77,Rice Flour,Staples,100,15,25,100,2
+78,Suji,Staples,70,25,40,160,4
+79,Baking Powder,Baking,50,30,40,160,5
+80,Baking Soda,Baking,40,35,50,200,6
+81,Yeast,Baking,150,5,8,32,1
+82,Vanilla Extract,Baking,200,3,5,20,1
+83,Chocolate Powder,Breakfast,120,20,35,140,4
+84,Milk Powder,Dairy,250,10,18,72,3
+85,Ice Cream,Dairy,150,20,30,120,5
+86,Cream,Dairy,80,15,25,100,4
+87,Condensed Milk,Dairy,60,25,40,160,5
+88,Evaporated Milk,Dairy,70,20,30,120,4
+89,Yogurt Drinks,Beverages,50,25,40,160,5
+90,Lassi,Beverages,40,30,50,200,6
+91,Buttermilk,Beverages,35,20,35,140,5
+92,Almond Milk,Dairy,120,10,18,72,3
+93,Soy Milk,Dairy,100,8,15,60,2
+94,Coconut Milk,Dairy,90,12,20,80,3
+95,Mushrooms,Vegetables,150,10,15,60,2
+96,Bell Pepper,Vegetables,50,30,45,180,4
+97,Broccoli,Vegetables,80,15,25,100,3
+98,Cauliflower,Vegetables,60,25,40,160,4
+99,Spinach,Vegetables,40,30,50,200,5
+100,Peas,Vegetables,50,40,60,240,5
+101,Corn,Vegetables,45,35,50,200,4
+102,Green Beans,Vegetables,55,25,40,160,4
+103,Radish,Vegetables,25,50,70,280,6
+104,Beetroot,Vegetables,35,40,60,240,5
+105,Pumpkin,Vegetables,30,60,80,320,6
+106,Coconut,Fruits,40,25,40,160,4
+107,Pineapple,Fruits,70,15,25,100,2
+108,Kiwi,Fruits,100,10,18,72,1
+109,Strawberry,Fruits,150,8,12,48,1
+110,Blueberry,Fruits,200,5,8,32,1
+111,Blackberry,Fruits,180,6,10,40,1
+112,Avocado,Fruits,120,12,18,72,2
+113,Pomegranate,Fruits,90,10,15,60,2
+114,Guava,Fruits,50,20,30,120,3
+115,Peach,Fruits,110,8,12,48,1
+116,Plum,Fruits,130,6,10,40,1
+117,Lemon,Fruits,20,80,120,480,7
+118,Lime,Fruits,25,70,100,400,6
+119,Ginger,Vegetables,70,20,35,140,4
+120,Chillies,Vegetables,120,15,25,100,3
+121,Mint,Vegetables,30,25,40,160,5
+122,Cilantro,Vegetables,35,30,50,200,5
+123,Parsley,Vegetables,40,20,35,140,4
+124,Basil,Vegetables,50,15,25,100,3
+125,Thyme,Spices,200,5,8,32,1
+126,Oregano,Spices,220,5,8,32,1
+127,Rosemary,Spices,240,4,6,24,1
+128,Bay Leaves,Spices,150,10,15,60,2
+129,Cardamom,Spices,400,5,8,32,1
+130,Cinnamon,Spices,350,6,10,40,1
+131,Cloves,Spices,380,5,8,32,1
+132,Star Anise,Spices,320,6,9,36,2
+133,Nutmeg,Spices,450,4,6,24,1
+134,Mace,Spices,460,3,5,20,1
+135,Fennel,Spices,280,8,12,48,2
+136,Fenugreek,Spices,300,6,10,40,2
+137,Poppy Seeds,Spices,400,4,6,24,1
+138,Sesame Seeds,Spices,350,8,12,48,2
+139,Sunflower Seeds,Nuts,150,10,15,60,3
+140,Pumpkin Seeds,Nuts,200,8,12,48,2
+141,Flax Seeds,Nuts,250,6,10,40,1
+142,Chia Seeds,Nuts,300,5,8,32,1
+143,Dried Fruits,Fruits,250,10,15,60,2
+144,Dates,Fruits,200,15,25,100,3
+145,Raisins,Fruits,300,12,18,72,2
+146,Dried Apricots,Fruits,280,8,12,48,1
+147,Dried Cranberries,Fruits,320,5,8,32,1
+148,Coconut Powder,Baking,180,10,18,72,3
+149,Cocoa Powder,Baking,200,8,15,60,2
+150,Dark Chocolate,Snacks,150,15,25,100,3
+151,Milk Chocolate,Snacks,120,20,35,140,4
+152,White Chocolate,Snacks,140,10,18,72,2
+153,Cake Mix,Baking,100,15,25,100,3
+154,Pancake Mix,Breakfast,80,20,30,120,4
+155,Waffle Mix,Breakfast,100,15,25,100,3
+156,Muffin Mix,Baking,90,12,20,80,2
+157,Cookie Dough,Baking,120,8,15,60,2
+158,Brownie Mix,Baking,110,10,18,72,2
+159,Soup Mix,Staples,50,20,35,140,4
+160,Instant Noodles,Staples,20,150,200,800,7
+161,Canned Soup,Staples,60,25,40,160,4
+162,Instant Oatmeal,Breakfast,70,30,45,180,5
+163,Granola,Breakfast,140,15,25,100,2
+164,Muesli,Breakfast,160,12,20,80,2
+165,Protein Bar,Snacks,100,20,35,140,4
+166,Granola Bar,Snacks,80,25,40,160,5
+167,Cereal Bar,Snacks,70,30,50,200,5
+168,Puffed Rice,Snacks,60,40,60,240,5
+169,Popcorn,Snacks,50,35,55,220,5
+170,Dried Shrimp,Protein,400,5,8,32,1
+171,Canned Tuna,Protein,120,20,30,120,4
+172,Canned Salmon,Protein,180,10,18,72,2
+173,Sardines,Protein,150,15,25,100,3
+174,Anchovies,Protein,200,8,12,48,1
+175,Tofu,Protein,100,15,25,100,3
+176,Tempeh,Protein,150,10,18,72,2
+177,Seitan,Protein,180,8,12,48,1
+178,Lentils,Staples,80,30,45,180,5
+179,Chickpeas,Staples,70,35,50,200,5
+180,Black Beans,Staples,60,25,40,160,4
+181,Kidney Beans,Staples,65,25,40,160,4
+182,Pinto Beans,Staples,60,20,35,140,4
+183,Split Peas,Staples,50,30,50,200,5
+184,Quinoa,Staples,200,10,15,60,2
+185,Farro,Staples,150,12,20,80,2
+186,Barley,Staples,120,15,25,100,3
+187,Buckwheat,Staples,140,10,18,72,2
+188,Millet,Staples,110,12,20,80,3
+189,Teff,Staples,180,8,12,48,1
+190,Amaranth,Staples,160,10,18,72,2
+191,Sorghum,Staples,100,15,25,100,3
+192,Durum Wheat,Staples,90,20,35,140,4
+193,Semolina,Staples,85,25,40,160,4
+194,Polenta,Staples,70,20,35,140,4
+195,Rice Bran,Baking,60,15,25,100,3
+196,Wheat Germ,Baking,150,10,18,72,2
+197,Oat Bran,Baking,140,8,15,60,2
+198,Almond Flour,Baking,300,5,8,32,1
+199,Coconut Flour,Baking,250,8,12,48,1
+200,Cornstarch,Baking,40,50,70,280,5
