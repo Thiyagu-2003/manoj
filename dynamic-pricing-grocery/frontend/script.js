@@ -221,16 +221,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (themeBtn) {
         themeBtn.addEventListener('click', toggleTheme);
     }
-
-    // Register Service Worker for PWA
-    if ('serviceWorker' in navigator) {
-        try {
-            await navigator.serviceWorker.register('sw.js');
-            console.log('✓ Service Worker registered');
-        } catch (error) {
-            console.error('✗ Service Worker registration failed:', error);
-        }
-    }
 });
 
 // Theme Management
@@ -608,7 +598,12 @@ function toggleAdminView() {
         adminDashboard.style.display = 'block';
         storeView.style.display = 'none';
         if (adminToggleBtn) adminToggleBtn.style.display = 'none';
-        loadAdminData();
+        
+        // Give the browser a frame to layout the dashboard
+        requestAnimationFrame(() => {
+            updateDashboardClock();
+            loadAdminData();
+        });
     } else {
         adminDashboard.style.display = 'none';
         storeView.style.display = 'block';
@@ -619,18 +614,54 @@ function toggleAdminView() {
 async function loadAdminData() {
     const cachedInsights = cache.get('insights');
     if (cachedInsights) {
+        populateSummaryCards(cachedInsights);
         initCharts(cachedInsights);
         renderStatsTable(cachedInsights);
     } else {
-        await loadInsights(); // This will call displayInsights which we'll update to also call initCharts
+        await loadInsights();
+    }
+}
+
+function updateDashboardClock() {
+    const ts = document.getElementById('dashboardTimestamp');
+    if (ts) {
+        ts.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+    }
+}
+
+function populateSummaryCards(data) {
+    const elements = {
+        'dash-total-products': data.total_products || '-',
+        'dash-total-stock': data.total_stock?.toLocaleString() || '-',
+        'dash-active-alerts': data.low_stock_alerts?.length || '0',
+        'dash-avg-price': data.average_price ? `₹${data.average_price.toFixed(2)}` : '-'
+    };
+
+    for (const [id, val] of Object.entries(elements)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
     }
 }
 
 function initCharts(data) {
+    // Helper to reset canvas
+    const resetCanvas = (wrapperId, canvasId) => {
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return null;
+        wrapper.innerHTML = ''; // Clear old canvas
+        const canvas = document.createElement('canvas');
+        canvas.id = canvasId;
+        wrapper.appendChild(canvas);
+        return canvas.getContext('2d');
+    };
+
     // 1. Sales & Demand Trends (Top 10)
-    const salesCtx = document.getElementById('salesChart')?.getContext('2d');
+    const salesCtx = resetCanvas('salesChartWrapper', 'salesChart');
     if (salesCtx) {
-        if (state.charts.sales) state.charts.sales.destroy();
+        if (state.charts.sales) {
+            state.charts.sales.destroy();
+            state.charts.sales = null;
+        }
         
         const topProducts = data.top_demand_products || [];
         state.charts.sales = new Chart(salesCtx, {
@@ -647,17 +678,24 @@ function initCharts(data) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                resizeDelay: 100, // Debounce resize to prevent loops
                 plugins: {
                     legend: { display: false }
+                },
+                layout: {
+                    padding: 0
                 }
             }
         });
     }
 
     // 2. Inventory Distribution by Category
-    const invCtx = document.getElementById('inventoryChart')?.getContext('2d');
+    const invCtx = resetCanvas('inventoryChartWrapper', 'inventoryChart');
     if (invCtx) {
-        if (state.charts.inventory) state.charts.inventory.destroy();
+        if (state.charts.inventory) {
+            state.charts.inventory.destroy();
+            state.charts.inventory = null;
+        }
         
         const stats = data.category_statistics || {};
         const labels = Object.keys(stats);
@@ -675,7 +713,20 @@ function initCharts(data) {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                resizeDelay: 100, // Debounce resize
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    }
+                },
+                layout: {
+                    padding: 0
+                }
             }
         });
     }
@@ -837,6 +888,8 @@ async function loadInsights() {
         hideSpinner('insightsSection');
         displayInsights(data);
         if (state.isAdminView) {
+            updateDashboardClock();
+            populateSummaryCards(data);
             initCharts(data);
             renderStatsTable(data);
         }

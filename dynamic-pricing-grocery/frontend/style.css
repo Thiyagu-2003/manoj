@@ -336,20 +336,14 @@ label {
 /* Dashboard Styles */
 .dashboard-section {
   padding: 2rem 0;
-  animation: fadeIn 0.4s ease-out;
+  /* animation removed to prevent layout shift during chart init */
 }
 
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding: 0 1rem;
-}
+/* ... lines 342-424 unchanged ... */
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 2rem;
   margin-bottom: 2rem;
 }
@@ -360,10 +354,22 @@ label {
   padding: 1.5rem;
   box-shadow: var(--shadow);
   border: 1px solid var(--border-color);
+  overflow: hidden;
+  min-width: 0; /* CRITICAL FIX: Allows grid item to shrink below content size */
 }
 
-.chart-container {
-  min-height: 400px;
+.chart-wrapper {
+  height: 300px !important;
+  width: 100% !important;
+  max-width: 100%; /* Ensure it never exceeds parent */
+  position: relative !important;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .stats-table {
@@ -372,22 +378,36 @@ label {
 
 .stats-table table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin-top: 1rem;
 }
 
 .stats-table th, .stats-table td {
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+}
+
+.stats-table tbody tr:hover {
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.stats-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .stats-table th {
   color: var(--text-muted);
   font-size: 0.85rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  background: var(--secondary-bg);
 }
+
+.stats-table th:first-child { border-radius: 8px 0 0 8px; }
+.stats-table th:last-child { border-radius: 0 8px 8px 0; }
 
 .btn-admin {
   color: white !important;
