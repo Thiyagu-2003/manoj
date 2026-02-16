@@ -1,5 +1,5 @@
 // Configuration
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'https://manoj-t5mg.onrender.com/api';
 const ITEMS_PER_PAGE = 12;
 
 // Cache Manager for client-side caching
